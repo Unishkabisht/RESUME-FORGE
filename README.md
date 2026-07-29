@@ -13,17 +13,17 @@ Explore and test the complete API collection directly in Postman:
 
 ## ✨ Features
 
--  **User Authentication & Management**: Registration, login, password reset (JWT-based token authentication), and user profile management.
--  **Document Management**: Create, list, retrieve, update, duplicate, import, and delete resume or cover letter documents.
--  **Flexible Document Structure**:
+- 🔐 **User Authentication & Management**: Registration, login, password reset (JWT-based token authentication), and user profile management.
+- 📄 **Document Management**: Create, list, retrieve, update, duplicate, import, and delete resume or cover letter documents.
+- 🧩 **Flexible Document Structure**:
   - **Sections**: Dynamic ordering and section headings within documents.
   - **Items**: Nested items inside sections for detailed experience, education, skills, projects, etc.
--  **Templates Support**: Browse resume templates with configurable styling options (retrievable by ID or slug/name).
--  **Ownership & Security**: Middleware-driven JWT verification and resource ownership authorization.
+- 🎨 **Templates Support**: Browse resume templates with configurable styling options (retrievable by ID or slug/name).
+- 🛡️ **Ownership & Security**: Middleware-driven JWT verification and resource ownership authorization.
 
 ---
 
-##  Tech Stack
+## 🛠️ Tech Stack
 
 - **Runtime**: Node.js
 - **Framework**: Express.js
@@ -34,7 +34,7 @@ Explore and test the complete API collection directly in Postman:
 
 ---
 
-##  Project Architecture
+## 📂 Project Architecture
 
 ```
 RESUME-FORGE-BACKEND/
@@ -52,7 +52,7 @@ RESUME-FORGE-BACKEND/
 
 ---
 
-##  Getting Started
+## 🚀 Getting Started
 
 ### Prerequisites
 
@@ -66,8 +66,8 @@ Ensure you have the following installed on your machine:
 
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/your-username/RESUME-FORGE-BACKEND.git
-   cd RESUME-FORGE-BACKEND
+   git clone https://github.com/Unishkabisht/RESUME-FORGE.git
+   cd RESUME-FORGE
    ```
 
 2. **Install Dependencies**
@@ -103,53 +103,54 @@ Ensure you have the following installed on your machine:
 
 ---
 
-##  API Endpoints Overview
+## 🔗 API Endpoints Overview
 
 All routes are prefixed with `/api`.
 
-###  Auth Routes (`/api/auth`)
+### 🔑 Auth Routes (`/api/auth`)
 | Method | Endpoint | Description | Auth Required |
 | :--- | :--- | :--- | :---: |
 | `POST` | `/api/auth/register` | Register a new user | ❌ |
 | `POST` | `/api/auth/login` | Authenticate user & return JWT token | ❌ |
-| `POST` | `/api/auth/reset-password` | Reset user password | 
+| `POST` | `/api/auth/reset-password` | Reset user password | 🔑 |
+
 ---
 
-###  User Routes (`/api/users`)
+### 👤 User Routes (`/api/users`)
 | Method | Endpoint | Description | Auth Required |
 | :--- | :--- | :--- | :---: |
-| `GET` | `/api/users/me` | Get current user profile | 
-| `PUT` | `/api/users/me` | Update current user profile | 
-| `DELETE` | `/api/users/me` | Delete current user account | 
+| `GET` | `/api/users/me` | Get current user profile | 🔑 |
+| `PUT` | `/api/users/me` | Update current user profile | 🔑 |
+| `DELETE` | `/api/users/me` | Delete current user account | 🔑 |
 
 ---
 
-###  Document Routes (`/api/documents`)
+### 📄 Document Routes (`/api/documents`)
 | Method | Endpoint | Description | Auth Required |
 | :--- | :--- | :--- | :---: |
-| `GET` | `/api/documents` | List all documents belonging to user | 
-| `POST` | `/api/documents` | Create a new document (`type: resume / cover_letter`) | 
-| `POST` | `/api/documents/import` | Import raw document content | 
-| `GET` | `/api/documents/:id` | Get full assembled document by ID | 
-| `PUT` | `/api/documents/:id` | Update document title or template | 
-| `POST` | `/api/documents/:id/duplicate` | Duplicate an existing document with all sections & items | 
-| `DELETE` | `/api/documents/:id` | Delete a document | 
+| `GET` | `/api/documents` | List all documents belonging to user | 🔑 |
+| `POST` | `/api/documents` | Create a new document (`type: resume / cover_letter`) | 🔑 |
+| `POST` | `/api/documents/import` | Import raw document content | 🔑 |
+| `GET` | `/api/documents/:id` | Get full assembled document by ID | 🔑 |
+| `PUT` | `/api/documents/:id` | Update document title or template | 🔑 |
+| `POST` | `/api/documents/:id/duplicate` | Duplicate an existing document with all sections & items | 🔑 |
+| `DELETE` | `/api/documents/:id` | Delete a document | 🔑 |
 
 ---
 
-###  Section & Item Routes (Nested under `/api/documents`)
+### 🧩 Section & Item Routes (Nested under `/api/documents`)
 | Method | Endpoint | Description | Auth Required |
 | :--- | :--- | :--- | :---: |
-| `POST` | `/api/documents/:id/sections` | Add section to document | 
-| `PATCH` | `/api/documents/:id/sections/:sectionId` | Update section heading/position | 
-| `DELETE` | `/api/documents/:id/sections/:sectionId` | Delete section | 
-| `POST` | `/api/documents/:id/sections/:sectionId/items` | Add item to section | 
-| `PATCH` | `/api/documents/:id/sections/:sectionId/items/:itemId` | Update section item | 
-| `DELETE` | `/api/documents/:id/sections/:sectionId/items/:itemId` | Delete section item | 
+| `POST` | `/api/documents/:id/sections` | Add section to document | 🔑 |
+| `PATCH` | `/api/documents/:id/sections/:sectionId` | Update section heading/position | 🔑 |
+| `DELETE` | `/api/documents/:id/sections/:sectionId` | Delete section | 🔑 |
+| `POST` | `/api/documents/:id/sections/:sectionId/items` | Add item to section | 🔑 |
+| `PATCH` | `/api/documents/:id/sections/:sectionId/items/:itemId` | Update section item | 🔑 |
+| `DELETE` | `/api/documents/:id/sections/:sectionId/items/:itemId` | Delete section item | 🔑 |
 
 ---
 
-###  Template Routes (`/api/templates`)
+### 🎨 Template Routes (`/api/templates`)
 | Method | Endpoint | Description | Auth Required |
 | :--- | :--- | :--- | :---: |
 | `GET` | `/api/templates` | List all available templates | ❌ |
@@ -157,7 +158,7 @@ All routes are prefixed with `/api`.
 
 ---
 
-##  Authentication Header
+## 🔒 Authentication Header
 
 For endpoints requiring authentication, pass the JWT token in the `Authorization` header:
 
@@ -165,4 +166,3 @@ For endpoints requiring authentication, pass the JWT token in the `Authorization
 Authorization: Bearer <your_jwt_token>
 ```
 
----
