@@ -5,7 +5,7 @@ const { Document, Section, Item } = require("../models");
 
 const VALID_TYPES = ["resume", "cover_letter"];
 
-async function checkOwnership(document, userId, res) {
+async function checkOwner(document, userId, res) {
   if (!document) {
     res.status(404).json({ success: false, message: "Document not found" });
     return false;
@@ -17,7 +17,7 @@ async function checkOwnership(document, userId, res) {
   return true;
 }
 
-async function assembleDocument(documentId) {
+async function assembleDoc(documentId) {
   const document = await Document.findOne({
     where: { id: documentId },
     include: [
@@ -55,7 +55,7 @@ async function assembleDocument(documentId) {
   return docJson;
 }
 
-async function listDocuments(req, res) {
+async function getAll(req, res) {
   try {
     const documents = await Document.findAll({ where: { userId: req.userId } });
     return res.status(200).json({
@@ -64,12 +64,12 @@ async function listDocuments(req, res) {
       data: documents,
     });
   } catch (error) {
-    console.log("error in listDocuments", error);
+    console.log("error in getAll", error);
     return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 }
 
-async function createDocument(req, res) {
+async function create(req, res) {
   try {
     const { title, type, templateId } = req.body;
 
@@ -100,12 +100,12 @@ async function createDocument(req, res) {
       data: document,
     });
   } catch (error) {
-    console.log("error in createDocument", error);
+    console.log("error in create", error);
     return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 }
 
-async function importDocument(req, res) {
+async function importDoc(req, res) {
   try {
     const { source, title, rawData } = req.body;
 
@@ -134,7 +134,7 @@ async function importDocument(req, res) {
       position: 1,
     });
 
-    const assembled = await assembleDocument(document.id);
+    const assembled = await assembleDoc(document.id);
 
     return res.status(201).json({
       success: true,
@@ -142,17 +142,17 @@ async function importDocument(req, res) {
       data: assembled,
     });
   } catch (error) {
-    console.log("error in importDocument", error);
+    console.log("error in importDoc", error);
     return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 }
 
-async function getDocument(req, res) {
+async function getById(req, res) {
   try {
     const document = await Document.findByPk(req.params.id);
-    if (!(await checkOwnership(document, req.userId, res))) return;
+    if (!(await checkOwner(document, req.userId, res))) return;
 
-    const assembled = await assembleDocument(document.id);
+    const assembled = await assembleDoc(document.id);
 
     return res.status(200).json({
       success: true,
@@ -160,15 +160,15 @@ async function getDocument(req, res) {
       data: assembled,
     });
   } catch (error) {
-    console.log("error in getDocument", error);
+    console.log("error in getById", error);
     return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 }
 
-async function updateDocument(req, res) {
+async function update(req, res) {
   try {
     const document = await Document.findByPk(req.params.id);
-    if (!(await checkOwnership(document, req.userId, res))) return;
+    if (!(await checkOwner(document, req.userId, res))) return;
 
     const { title, templateId } = req.body;
     if (title !== undefined) document.title = title;
@@ -181,15 +181,15 @@ async function updateDocument(req, res) {
       data: document,
     });
   } catch (error) {
-    console.log("error in updateDocument", error);
+    console.log("error in update", error);
     return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 }
 
-async function duplicateDocument(req, res) {
+async function duplicate(req, res) {
   try {
     const document = await Document.findByPk(req.params.id);
-    if (!(await checkOwnership(document, req.userId, res))) return;
+    if (!(await checkOwner(document, req.userId, res))) return;
 
     const copy = await Document.create({
       userId: req.userId,
@@ -220,7 +220,7 @@ async function duplicateDocument(req, res) {
       }
     }
 
-    const assembled = await assembleDocument(copy.id);
+    const assembled = await assembleDoc(copy.id);
 
     return res.status(201).json({
       success: true,
@@ -228,15 +228,15 @@ async function duplicateDocument(req, res) {
       data: assembled,
     });
   } catch (error) {
-    console.log("error in duplicateDocument", error);
+    console.log("error in duplicate", error);
     return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 }
 
-async function deleteDocument(req, res) {
+async function remove(req, res) {
   try {
     const document = await Document.findByPk(req.params.id);
-    if (!(await checkOwnership(document, req.userId, res))) return;
+    if (!(await checkOwner(document, req.userId, res))) return;
 
     await document.destroy();
 
@@ -246,19 +246,19 @@ async function deleteDocument(req, res) {
       data: {},
     });
   } catch (error) {
-    console.log("error in deleteDocument", error);
+    console.log("error in remove", error);
     return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 }
 
 module.exports = {
-  listDocuments,
-  createDocument,
-  importDocument,
-  getDocument,
-  updateDocument,
-  duplicateDocument,
-  deleteDocument,
-  checkOwnership,
-  assembleDocument,
+  getAll,
+  create,
+  importDoc,
+  getById,
+  update,
+  duplicate,
+  remove,
+  checkOwner,
+  assembleDoc,
 };

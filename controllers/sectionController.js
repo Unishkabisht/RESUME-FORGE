@@ -2,17 +2,17 @@
 // Handles sections within a document and the items inside each section.
 
 const { Document, Section, Item } = require("../models");
-const { checkOwnership } = require("./documentController");
+const { checkOwner } = require("./documentController");
 
 const VALID_SECTION_TYPES = ["experience", "education", "skills", "projects", "custom"];
 
-async function getDocumentOrFail(req, res) {
+async function getDoc(req, res) {
   const document = await Document.findByPk(req.params.id);
-  if (!(await checkOwnership(document, req.userId, res))) return null;
+  if (!(await checkOwner(document, req.userId, res))) return null;
   return document;
 }
 
-async function getSectionOrFail(documentId, sectionId, res) {
+async function getSection(documentId, sectionId, res) {
   const section = await Section.findByPk(sectionId);
   if (!section || section.documentId !== Number(documentId)) {
     res.status(404).json({ success: false, message: "Section not found" });
@@ -21,9 +21,9 @@ async function getSectionOrFail(documentId, sectionId, res) {
   return section;
 }
 
-async function createSection(req, res) {
+async function create(req, res) {
   try {
-    const document = await getDocumentOrFail(req, res);
+    const document = await getDoc(req, res);
     if (!document) return;
 
     const { type, label } = req.body;
@@ -52,17 +52,17 @@ async function createSection(req, res) {
       data: section,
     });
   } catch (error) {
-    console.log("error in createSection", error);
+    console.log("error in create section", error);
     return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 }
 
-async function updateSection(req, res) {
+async function update(req, res) {
   try {
-    const document = await getDocumentOrFail(req, res);
+    const document = await getDoc(req, res);
     if (!document) return;
 
-    const section = await getSectionOrFail(document.id, req.params.sectionId, res);
+    const section = await getSection(document.id, req.params.sectionId, res);
     if (!section) return;
 
     const { label, order } = req.body;
@@ -82,17 +82,17 @@ async function updateSection(req, res) {
       data: section,
     });
   } catch (error) {
-    console.log("error in updateSection", error);
+    console.log("error in update section", error);
     return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 }
 
-async function deleteSection(req, res) {
+async function remove(req, res) {
   try {
-    const document = await getDocumentOrFail(req, res);
+    const document = await getDoc(req, res);
     if (!document) return;
 
-    const section = await getSectionOrFail(document.id, req.params.sectionId, res);
+    const section = await getSection(document.id, req.params.sectionId, res);
     if (!section) return;
 
     await section.destroy();
@@ -103,17 +103,17 @@ async function deleteSection(req, res) {
       data: {},
     });
   } catch (error) {
-    console.log("error in deleteSection", error);
+    console.log("error in remove section", error);
     return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 }
 
 async function createItem(req, res) {
   try {
-    const document = await getDocumentOrFail(req, res);
+    const document = await getDoc(req, res);
     if (!document) return;
 
-    const section = await getSectionOrFail(document.id, req.params.sectionId, res);
+    const section = await getSection(document.id, req.params.sectionId, res);
     if (!section) return;
 
     const { fields } = req.body;
@@ -140,10 +140,10 @@ async function createItem(req, res) {
 
 async function updateItem(req, res) {
   try {
-    const document = await getDocumentOrFail(req, res);
+    const document = await getDoc(req, res);
     if (!document) return;
 
-    const section = await getSectionOrFail(document.id, req.params.sectionId, res);
+    const section = await getSection(document.id, req.params.sectionId, res);
     if (!section) return;
 
     const item = await Item.findByPk(req.params.itemId);
@@ -173,12 +173,12 @@ async function updateItem(req, res) {
   }
 }
 
-async function deleteItem(req, res) {
+async function removeItem(req, res) {
   try {
-    const document = await getDocumentOrFail(req, res);
+    const document = await getDoc(req, res);
     if (!document) return;
 
-    const section = await getSectionOrFail(document.id, req.params.sectionId, res);
+    const section = await getSection(document.id, req.params.sectionId, res);
     if (!section) return;
 
     const item = await Item.findByPk(req.params.itemId);
@@ -194,16 +194,16 @@ async function deleteItem(req, res) {
       data: {},
     });
   } catch (error) {
-    console.log("error in deleteItem", error);
+    console.log("error in removeItem", error);
     return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 }
 
 module.exports = {
-  createSection,
-  updateSection,
-  deleteSection,
+  create,
+  update,
+  remove,
   createItem,
   updateItem,
-  deleteItem,
+  removeItem,
 };

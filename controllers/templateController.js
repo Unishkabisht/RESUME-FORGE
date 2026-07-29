@@ -3,7 +3,7 @@
 
 const { Template } = require("../models");
 
-async function listTemplates(req, res) {
+async function getAll(req, res) {
   try {
     const templates = await Template.findAll();
     return res.status(200).json({
@@ -12,12 +12,12 @@ async function listTemplates(req, res) {
       data: templates,
     });
   } catch (error) {
-    console.log("error in listTemplates", error);
+    console.log("error in getAll templates", error);
     return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 }
 
-async function getTemplate(req, res) {
+async function getById(req, res) {
   try {
     let template = await Template.findByPk(req.params.id);
     
@@ -39,9 +39,9 @@ async function getTemplate(req, res) {
       data: template,
     });
   } catch (error) {
-    console.log("error in getTemplate", error);
+    console.log("error in getById template", error);
     return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 }
 
-module.exports = { listTemplates, getTemplate };
+module.exports = { getAll, getById };

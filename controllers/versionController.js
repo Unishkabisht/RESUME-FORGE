@@ -2,14 +2,14 @@
 // Handles document versions
 
 const { Document, Version } = require("../models");
-const { checkOwnership } = require("./documentController");
+const { checkOwner } = require("./documentController");
 
-async function listVersions(req, res) {
+async function getAll(req, res) {
   try {
     const documentId = req.params.id;
 
     const document = await Document.findByPk(documentId);
-    if (!(await checkOwnership(document, req.userId, res))) return;
+    if (!(await checkOwner(document, req.userId, res))) return;
 
     const versions = await Version.findAll({
       where: { documentId },
@@ -22,18 +22,18 @@ async function listVersions(req, res) {
       data: versions,
     });
   } catch (error) {
-    console.log("error in listVersions", error);
+    console.log("error in getAll versions", error);
     return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 }
 
-async function createVersion(req, res) {
+async function create(req, res) {
   try {
     const documentId = req.params.id;
     const { label, snapshot } = req.body;
 
     const document = await Document.findByPk(documentId);
-    if (!(await checkOwnership(document, req.userId, res))) return;
+    if (!(await checkOwner(document, req.userId, res))) return;
 
     const version = await Version.create({
       documentId: document.id,
@@ -47,18 +47,18 @@ async function createVersion(req, res) {
       data: version,
     });
   } catch (error) {
-    console.log("error in createVersion", error);
+    console.log("error in create version", error);
     return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 }
 
-async function getVersion(req, res) {
+async function getById(req, res) {
   try {
     const documentId = req.params.id;
     const { versionId } = req.params;
 
     const document = await Document.findByPk(documentId);
-    if (!(await checkOwnership(document, req.userId, res))) return;
+    if (!(await checkOwner(document, req.userId, res))) return;
 
     const version = await Version.findOne({
       where: { id: versionId, documentId: document.id },
@@ -74,18 +74,18 @@ async function getVersion(req, res) {
       data: version,
     });
   } catch (error) {
-    console.log("error in getVersion", error);
+    console.log("error in getById version", error);
     return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 }
 
-async function deleteVersion(req, res) {
+async function remove(req, res) {
   try {
     const documentId = req.params.id;
     const { versionId } = req.params;
 
     const document = await Document.findByPk(documentId);
-    if (!(await checkOwnership(document, req.userId, res))) return;
+    if (!(await checkOwner(document, req.userId, res))) return;
 
     const version = await Version.findOne({
       where: { id: versionId, documentId: document.id },
@@ -103,14 +103,14 @@ async function deleteVersion(req, res) {
       data: {},
     });
   } catch (error) {
-    console.log("error in deleteVersion", error);
+    console.log("error in remove version", error);
     return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 }
 
 module.exports = {
-  listVersions,
-  createVersion,
-  getVersion,
-  deleteVersion,
+  getAll,
+  create,
+  getById,
+  remove,
 };
