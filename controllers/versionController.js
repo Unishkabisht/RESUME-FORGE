@@ -1,5 +1,5 @@
 // controllers/versionController.js
-// Handles document versions/snapshots.
+// Handles document versions
 
 const { Document, Version } = require("../models");
 const { checkOwnership } = require("./documentController");
