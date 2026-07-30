@@ -1,64 +1,55 @@
-const { User } = require('../models');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
+/**
+ * @file authController.js
+ * @description Authentication controller for user registration, login, and password resets.
+ */
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const { User } = require("../models");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
-// Register a new user
+/**
+ * Register a new user account.
+ * @route POST /api/auth/register
+ */
 async function register(req, res) {
   try {
-    // Step 1: Take the input value from body
     const { name, email, password } = req.body;
 
-    // Step 2: Validate the input
     if (!name || !email || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Name, email, and password are required'
+        message: "Required fields missing",
       });
     }
 
-    // Step 3: Check if the user already exists
-    const alreadyExists = await User.count({
-      where: {
-        email
-      }
-    }); // select count(*) from users where email = '...'
-
-    if (alreadyExists > 0) {
+    const exists = await User.count({ where: { email } });
+    if (exists > 0) {
       return res.status(409).json({
         success: false,
-        message: 'User already exists'
+        message: "User already exists",
       });
     }
 
-    // Step 4: Create the user (password gets hashed automatically via model hook)
-    const user = await User.create({
-      name,
-      email,
-      password,
-    }); // insert into users (name, email, password) values (...)
+    const user = await User.create({ name, email, password });
 
-    const data = {
-      userId: user.id,
-    };
-
-    // Step 5: Send success response
-    return res.json({
+    return res.status(201).json({
       success: true,
-      message: "User registered successfully",
-      data
+      message: "User registered",
+      data: { userId: user.id },
     });
   } catch (error) {
-    console.log("error in register", error);
+    console.error("register error:", error);
     return res.status(500).json({
       success: false,
-      message: "Failed to register user."
+      message: "Registration failed",
     });
   }
 }
 
-// Login user
+/**
+ * Authenticate user and issue JWT token.
+ * @route POST /api/auth/login
+ */
 async function login(req, res) {
   try {
     const { email, password } = req.body;
@@ -66,107 +57,86 @@ async function login(req, res) {
     if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Email and password are required'
+        message: "Email and password required",
       });
     }
 
-    // step 3: get user detail by email
-    // select * from users where email="provided email" and name="provided name"
-    const user = await User.findOne({
-      where: {
-        email
-      }
-    });
-
+    const user = await User.findOne({ where: { email } });
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: "Invalid Credentials!"
+        message: "Invalid credentials",
       });
     }
 
-    const isPasswordValid = bcrypt.compareSync(password, user.password);
-    if (!isPasswordValid) {
+    const isValid = bcrypt.compareSync(password, user.password);
+    if (!isValid) {
       return res.status(401).json({
         success: false,
-        message: "Invalid Credentials!"
+        message: "Invalid credentials",
       });
     }
 
-    // Step 4: Generate JWT Token
-    const profile = {
-      id: user.id,
-      email: user.email,
-      name: user.name
-    };
+    const profile = { id: user.id, email: user.email, name: user.name };
+    const token = jwt.sign(profile, process.env.JWT_SECRET, { expiresIn: "7d" });
 
-    const token = jwt.sign(profile, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
-
-    return res.json({
+    return res.status(200).json({
       success: true,
-      message: "User logged in successfully",
-      data: {
-        token,
-        user: profile
-      }
+      message: "Logged in successfully",
+      data: { token, user: profile },
     });
-  } catch (e) {
-    return res.status(400).json({
+  } catch (error) {
+    console.error("login error:", error);
+    return res.status(500).json({
       success: false,
       message: "Internal server error",
-      error: e.message
     });
   }
 }
 
-// Reset Password (verifies oldPassword and hashes newPassword directly)
-async function resetPassword(req, res, next) {
+/**
+ * Reset authenticated user password.
+ * @route POST /api/auth/reset-password
+ */
+async function resetPass(req, res) {
   try {
     const { oldPassword, newPassword } = req.body;
 
     if (!oldPassword || !newPassword) {
       return res.status(400).json({
         success: false,
-        message: "Old password and new password are required"
+        message: "Password fields missing",
       });
     }
 
-    const user = await User.findOne({
-      where: {
-        id: req.userId
-      }
-    });
-
+    const user = await User.findByPk(req.userId);
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: "Invalid Credentials!"
+        message: "User not found",
       });
     }
 
-    // step 3
-    const isPasswordValid = bcrypt.compareSync(oldPassword, user.password || "");
-    if (!isPasswordValid) {
+    const isValid = bcrypt.compareSync(oldPassword, user.password || "");
+    if (!isValid) {
       return res.status(401).json({
         success: false,
-        message: "Old password is wrong"
+        message: "Incorrect current password",
       });
     }
 
-    // step 4
     user.password = newPassword;
-    await user.save(); // -> update users set password="you encr..."
+    await user.save();
 
-    return res.json({
+    return res.status(200).json({
       success: true,
-      message: "Password reset successfully",
+      message: "Password reset",
     });
-  } catch (e) {
+  } catch (error) {
+    console.error("resetPass error:", error);
     return res.status(500).json({
       success: false,
-      message: "Internal Server Error"
+      message: "Internal server error",
     });
   }
 }
@@ -174,5 +144,5 @@ async function resetPassword(req, res, next) {
 module.exports = {
   register,
   login,
-  resetPassword
+  resetPass,
 };

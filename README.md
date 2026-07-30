@@ -7,9 +7,8 @@ Built using **Node.js**, **Express.js**, **Sequelize ORM**, and **MySQL**.
 ---
 ##  Postman API Documentation
 
-Explore and test the complete API collection directly in Postman:
-👉 **[View Postman API Documentation](https://documenter.getpostman.com/view/56589047/2sBY4SMyuy)**
-
+Explore and test the complete API collection:
+* 👉 **[View Postman API Documentation Online](https://documenter.getpostman.com/view/56589047/2sBY4SNzfR)**
 
 ##  Features
 
@@ -62,52 +61,14 @@ Ensure you have the following installed on your machine:
 
 ---
 
-### Installation
-
-1. **Clone the Repository**
-   ```bash
-   git clone https://github.com/Unishkabisht/RESUME-FORGE.git
-   cd RESUME-FORGE
-   ```
-
-2. **Install Dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Configure Environment Variables**
-
-   Create a `.env` file in the root directory (or update existing `.env`):
-
-   ```env
-   PORT=5000
-   DATABASE_USER=root
-   DATABASE_PASSWORD=your_mysql_password
-   DATABASE_NAME=resume_forge_api
-   DATABASE_HOST=127.0.0.1
-   MYSQL_PORT=3306
-   JWT_SECRET=your_jwt_secret_key
-   ```
-
-4. **Run Database Migrations**
-   ```bash
-   npx sequelize-cli db:create
-   npx sequelize-cli db:migrate
-   ```
-
-5. **Start the Development Server**
-   ```bash
-   npm run dev
-   ```
-   The API server will start on `http://localhost:5000`.
-
----
 
 ##  API Endpoints Overview
 
-All routes are prefixed with `/api`.
+All routes are prefixed with the base URL: `http://localhost:5000/api`.
 
-###  Auth Routes (`/api/auth`)
+---
+
+### 1. Auth Routes (`/api/auth`)
 | Method | Endpoint | Description | Auth Required |
 | :--- | :--- | :--- | :---: |
 | `POST` | `/api/auth/register` | Register a new user | ❌ |
@@ -116,7 +77,7 @@ All routes are prefixed with `/api`.
 
 ---
 
-###  User Routes (`/api/users`)
+### 2. User Routes (`/api/users`)
 | Method | Endpoint | Description | Auth Required |
 | :--- | :--- | :--- | :---: |
 | `GET` | `/api/users/me` | Get current user profile | 🔑 |
@@ -125,20 +86,20 @@ All routes are prefixed with `/api`.
 
 ---
 
-###  Document Routes (`/api/documents`)
+### 3. Document Routes (`/api/documents`)
 | Method | Endpoint | Description | Auth Required |
 | :--- | :--- | :--- | :---: |
-| `GET` | `/api/documents` | List all documents belonging to user | 🔑 |
 | `POST` | `/api/documents` | Create a new document (`type: resume / cover_letter`) | 🔑 |
-| `POST` | `/api/documents/import` | Import raw document content | 🔑 |
+| `GET` | `/api/documents` | List all documents belonging to user | 🔑 |
 | `GET` | `/api/documents/:id` | Get full assembled document by ID | 🔑 |
 | `PUT` | `/api/documents/:id` | Update document title or template | 🔑 |
 | `POST` | `/api/documents/:id/duplicate` | Duplicate an existing document with all sections & items | 🔑 |
+| `POST` | `/api/documents/import` | Import raw document content | 🔑 |
 | `DELETE` | `/api/documents/:id` | Delete a document | 🔑 |
 
 ---
 
-###  Section & Item Routes (Nested under `/api/documents`)
+### 4. Section & Item Routes (Nested under `/api/documents` or `/api/sections`)
 | Method | Endpoint | Description | Auth Required |
 | :--- | :--- | :--- | :---: |
 | `POST` | `/api/documents/:id/sections` | Add section to document | 🔑 |
@@ -150,11 +111,59 @@ All routes are prefixed with `/api`.
 
 ---
 
-###  Template Routes (`/api/templates`)
+### 5. Template Routes (`/api/templates`)
+Manage custom visual configurations including layout, typography, themes, and font styling options.
 | Method | Endpoint | Description | Auth Required |
 | :--- | :--- | :--- | :---: |
-| `GET` | `/api/templates` | List all available templates | ❌ |
-| `GET` | `/api/templates/:id` | Get template by ID or template name/slug | ❌ |
+| `GET` | `/api/templates` | List all available resume/cover letter templates | ❌ |
+| `GET` | `/api/templates/:id` | Get template details by ID or template name/slug | ❌ |
+
+**Template Configuration Schema (`config` JSON structure)**:
+* `theme`: Color theme palette (e.g. `"classic-navy"`, `"modern-emerald"`, `"minimal-dark"`)
+* `fontFamily`: Primary font family (e.g. `"Inter"`, `"Roboto"`, `"Lora"`)
+* `fontSize`: Base font size selection (e.g. `"10pt"`, `"11pt"`, `"12pt"`)
+* `spacing`: Margin & padding scaling (e.g. `"compact"`, `"normal"`, `"loose"`)
+
+---
+
+### 6. Document Version Routes (Nested under `/api/documents` or `/api/versions`)
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :---: |
+| `GET` | `/api/documents/:id/versions` | List all version snapshots for a document | 🔑 |
+| `POST` | `/api/documents/:id/versions` | Create a new version snapshot | 🔑 |
+| `GET` | `/api/documents/:id/versions/:versionId` | Get specific version snapshot | 🔑 |
+| `DELETE` | `/api/documents/:id/versions/:versionId` | Delete a specific version snapshot | 🔑 |
+
+---
+
+### 7. Document Sharing Routes (`/api/share` and nested under `/api/documents`)
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :---: |
+| `POST` | `/api/documents/:id/share` | Create/enable sharing for a document | 🔑 |
+| `GET` | `/api/documents/:id/share` | Get active sharing details of a document | 🔑 |
+| `DELETE` | `/api/documents/:id/share` | Disable sharing / delete share details | 🔑 |
+| `GET` | `/api/share/:slug` | Retrieve public document content by unique share slug | ❌ |
+
+---
+
+### 8. Export Routes (`/api/exports` and nested under `/api/documents`)
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :---: |
+| `POST` | `/api/documents/:id/export` | Export a document (logs export record) | 🔑 |
+| `GET` | `/api/documents/:id/exports` | Get export logs specifically for a document | 🔑 |
+| `GET` | `/api/exports` | Get all export log records of current user | 🔑 |
+| `GET` | `/api/exports/:id` | Get details of a specific export log record | 🔑 |
+
+---
+
+### 9. Job Application Tracking Routes (`/api/applications`)
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :---: |
+| `GET` | `/api/applications` | List all tracked job applications | 🔑 |
+| `POST` | `/api/applications` | Create a new job application tracking entry | 🔑 |
+| `GET` | `/api/applications/:id` | Get details of a tracked job application | 🔑 |
+| `PUT` | `/api/applications/:id` | Update job application details / status | 🔑 |
+| `DELETE` | `/api/applications/:id` | Delete application tracking entry | 🔑 |
 
 ---
 
@@ -165,4 +174,44 @@ For endpoints requiring authentication, pass the JWT token in the `Authorization
 ```http
 Authorization: Bearer <your_jwt_token>
 ```
+
+---
+
+##  Quick Start Postman / cURL Commands
+
+You can run these commands directly or import them into Postman to test the backend API flow:
+
+### 1. Register User (Unishka Bisht)
+```bash
+curl -X POST http://localhost:5000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Unishka Bisht",
+    "email": "[EMAIL_ADDRESS]",
+    "password": "[PASSWORD]"
+  }'
+```
+
+### 2. Login User
+```bash
+curl -X POST http://localhost:5000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "unishka.bisht@example.com",
+    "password": "[PASSWORD]"
+  }'
+```
+
+### 3. Create Document (Resume)
+Make sure to replace `<your_jwt_token>` with the token received from the Login step:
+```bash
+curl -X POST http://localhost:5000/api/documents \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your_jwt_token>" \
+  -d '{
+    "title": "Unishka Bisht - Software Engineering Resume",
+    "type": "resume"
+  }'
+```
+
 

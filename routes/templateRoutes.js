@@ -1,3 +1,8 @@
+/**
+ * @file templateRoutes.js
+ * @description Express router for template endpoints.
+ */
+
 const express = require("express");
 const router = express.Router();
 const templateController = require("../controllers/templateController");

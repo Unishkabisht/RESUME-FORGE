@@ -1,20 +1,29 @@
-// routes/index.js
-// Single entry point for all API routes.
-// Registers all split routes so that app.js only has to mount this one router.
+/**
+ * @file index.js
+ * @description Primary Express router assembling all individual API sub-routers.
+ */
 
 const express = require("express");
 const router = express.Router();
 
-// Import individual routers
 const authRoutes = require("./authRoutes");
 const userRoutes = require("./userRoutes");
 const documentRoutes = require("./documentRoutes");
+const sectionRoutes = require("./sectionRoutes");
+const versionRoutes = require("./versionRoutes");
 const templateRoutes = require("./templateRoutes");
+const shareRoutes = require("./shareRoutes");
+const applicationRoutes = require("./applicationRoutes");
+const exportRoutes = require("./exportRoutes");
 
-// Mount the routes
 router.use("/auth", authRoutes);
 router.use("/users", userRoutes);
 router.use("/documents", documentRoutes);
+router.use("/sections", sectionRoutes);
+router.use("/versions", versionRoutes);
 router.use("/templates", templateRoutes);
+router.use("/share", shareRoutes);
+router.use("/applications", applicationRoutes);
+router.use("/exports", exportRoutes);
 
 module.exports = router;

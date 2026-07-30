@@ -1,9 +1,15 @@
-// controllers/versionController.js
-// Handles document versions
+/**
+ * @file versionController.js
+ * @description Controller for managing document version snapshots.
+ */
 
 const { Document, Version } = require("../models");
-const { checkOwner } = require("./documentController");
+const { checkOwner, assembleDoc } = require("./documentController");
 
+/**
+ * Fetch all versions for a document.
+ * @route GET /api/documents/:id/versions
+ */
 async function getAll(req, res) {
   try {
     const documentId = req.params.id;
@@ -18,40 +24,63 @@ async function getAll(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: "Versions fetched successfully",
+      message: "Versions fetched",
       data: versions,
     });
   } catch (error) {
-    console.log("error in getAll versions", error);
-    return res.status(500).json({ success: false, message: "Internal Server Error" });
+    console.error("getAll versions error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 }
 
+/**
+ * Create a new version snapshot for a document.
+ * @route POST /api/documents/:id/versions
+ */
 async function create(req, res) {
   try {
     const documentId = req.params.id;
-    const { label, snapshot } = req.body;
+    const { label, snapshot } = req.body || {};
 
     const document = await Document.findByPk(documentId);
     if (!(await checkOwner(document, req.userId, res))) return;
 
+    let snapshotData = snapshot;
+    if (!snapshotData) {
+      // Automatically snapshot the current state of the document
+      const assembled = await assembleDoc(document.id);
+      snapshotData = JSON.stringify({ assembled });
+    } else if (typeof snapshotData !== "string") {
+      snapshotData = JSON.stringify(snapshotData);
+    }
+
     const version = await Version.create({
       documentId: document.id,
       label: label || "Version Snapshot",
-      snapshot: typeof snapshot === "string" ? snapshot : JSON.stringify(snapshot || {}),
+      snapshot: snapshotData,
     });
 
     return res.status(201).json({
       success: true,
-      message: "Version created successfully",
+      message: "Version created",
       data: version,
     });
   } catch (error) {
-    console.log("error in create version", error);
-    return res.status(500).json({ success: false, message: "Internal Server Error" });
+    console.error("create version error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 }
 
+/**
+ * Fetch a specific version by ID.
+ * @route GET /api/documents/:id/versions/:versionId
+ */
 async function getById(req, res) {
   try {
     const documentId = req.params.id;
@@ -65,20 +94,30 @@ async function getById(req, res) {
     });
 
     if (!version) {
-      return res.status(404).json({ success: false, message: "Version not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Version not found",
+      });
     }
 
     return res.status(200).json({
       success: true,
-      message: "Version fetched successfully",
+      message: "Version fetched",
       data: version,
     });
   } catch (error) {
-    console.log("error in getById version", error);
-    return res.status(500).json({ success: false, message: "Internal Server Error" });
+    console.error("getById version error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 }
 
+/**
+ * Delete a specific version snapshot.
+ * @route DELETE /api/documents/:id/versions/:versionId
+ */
 async function remove(req, res) {
   try {
     const documentId = req.params.id;
@@ -92,19 +131,25 @@ async function remove(req, res) {
     });
 
     if (!version) {
-      return res.status(404).json({ success: false, message: "Version not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Version not found",
+      });
     }
 
     await version.destroy();
 
     return res.status(200).json({
       success: true,
-      message: "Version deleted successfully",
+      message: "Version deleted",
       data: {},
     });
   } catch (error) {
-    console.log("error in remove version", error);
-    return res.status(500).json({ success: false, message: "Internal Server Error" });
+    console.error("remove version error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 }
 

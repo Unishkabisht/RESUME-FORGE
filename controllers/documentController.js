@@ -1,17 +1,23 @@
-// controllers/documentController.js
-// Handles resume/cover-letter documents using Sequelize MySQL models.
+/**
+ * @file documentController.js
+ * @description Controller for document management (resumes and cover letters).
+ */
 
 const { Document, Section, Item } = require("../models");
 
-const VALID_TYPES = ["resume", "cover_letter"];
-
 async function checkOwner(document, userId, res) {
   if (!document) {
-    res.status(404).json({ success: false, message: "Document not found" });
+    res.status(404).json({
+      success: false,
+      message: "Document not found",
+    });
     return false;
   }
   if (document.userId !== userId) {
-    res.status(403).json({ success: false, message: "Forbidden" });
+    res.status(403).json({
+      success: false,
+      message: "Forbidden",
+    });
     return false;
   }
   return true;
@@ -23,11 +29,7 @@ async function assembleDoc(documentId) {
     include: [
       {
         model: Section,
-        include: [
-          {
-            model: Item,
-          },
-        ],
+        include: [{ model: Item }],
       },
     ],
     order: [
@@ -38,7 +40,6 @@ async function assembleDoc(documentId) {
 
   if (!document) return null;
 
-  // Map to format returned by the old API
   const docJson = document.toJSON();
   if (docJson.Sections) {
     docJson.sections = docJson.Sections.map((sec) => {
@@ -60,12 +61,15 @@ async function getAll(req, res) {
     const documents = await Document.findAll({ where: { userId: req.userId } });
     return res.status(200).json({
       success: true,
-      message: "Documents fetched successfully",
+      message: "Documents fetched",
       data: documents,
     });
   } catch (error) {
-    console.log("error in getAll", error);
-    return res.status(500).json({ success: false, message: "Internal Server Error" });
+    console.error("getAll documents error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 }
 
@@ -76,14 +80,7 @@ async function create(req, res) {
     if (!title || !type) {
       return res.status(400).json({
         success: false,
-        message: "Title and type are required",
-      });
-    }
-
-    if (!VALID_TYPES.includes(type)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid type",
+        message: "Title and type required",
       });
     }
 
@@ -91,59 +88,20 @@ async function create(req, res) {
       userId: req.userId,
       title,
       type,
-      templateId: templateId ?? null,
+      templateId: templateId || null,
     });
 
     return res.status(201).json({
       success: true,
-      message: "Document created successfully",
+      message: "Document created",
       data: document,
     });
   } catch (error) {
-    console.log("error in create", error);
-    return res.status(500).json({ success: false, message: "Internal Server Error" });
-  }
-}
-
-async function importDoc(req, res) {
-  try {
-    const { source, title, rawData } = req.body;
-
-    if (!source || !title) {
-      return res.status(400).json({
-        success: false,
-        message: "Source and title are required",
-      });
-    }
-
-    const document = await Document.create({
-      userId: req.userId,
-      title,
-      type: "resume",
+    console.error("create document error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
     });
-
-    const section = await Section.create({
-      documentId: document.id,
-      heading: "Imported Content",
-      position: 1,
-    });
-
-    await Item.create({
-      sectionId: section.id,
-      content: typeof rawData === "string" ? rawData : JSON.stringify(rawData),
-      position: 1,
-    });
-
-    const assembled = await assembleDoc(document.id);
-
-    return res.status(201).json({
-      success: true,
-      message: `Document imported from ${source}; content auto-generated from rawData`,
-      data: assembled,
-    });
-  } catch (error) {
-    console.log("error in importDoc", error);
-    return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 }
 
@@ -152,16 +110,19 @@ async function getById(req, res) {
     const document = await Document.findByPk(req.params.id);
     if (!(await checkOwner(document, req.userId, res))) return;
 
-    const assembled = await assembleDoc(document.id);
+    const assembledDoc = await assembleDoc(document.id);
 
     return res.status(200).json({
       success: true,
-      message: "Document fetched successfully",
-      data: assembled,
+      message: "Document fetched",
+      data: assembledDoc,
     });
   } catch (error) {
-    console.log("error in getById", error);
-    return res.status(500).json({ success: false, message: "Internal Server Error" });
+    console.error("getById document error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 }
 
@@ -177,12 +138,15 @@ async function update(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: "Document updated successfully",
+      message: "Document updated",
       data: document,
     });
   } catch (error) {
-    console.log("error in update", error);
-    return res.status(500).json({ success: false, message: "Internal Server Error" });
+    console.error("update document error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 }
 
@@ -211,7 +175,7 @@ async function duplicate(req, res) {
         position: section.position,
       });
 
-      for (const item of (section.Items || [])) {
+      for (const item of section.Items || []) {
         await Item.create({
           sectionId: newSection.id,
           content: item.content,
@@ -220,16 +184,19 @@ async function duplicate(req, res) {
       }
     }
 
-    const assembled = await assembleDoc(copy.id);
+    const assembledDoc = await assembleDoc(copy.id);
 
     return res.status(201).json({
       success: true,
-      message: "Document duplicated successfully",
-      data: assembled,
+      message: "Document duplicated",
+      data: assembledDoc,
     });
   } catch (error) {
-    console.log("error in duplicate", error);
-    return res.status(500).json({ success: false, message: "Internal Server Error" });
+    console.error("duplicate document error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 }
 
@@ -242,19 +209,21 @@ async function remove(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: "Document deleted successfully",
+      message: "Document deleted",
       data: {},
     });
   } catch (error) {
-    console.log("error in remove", error);
-    return res.status(500).json({ success: false, message: "Internal Server Error" });
+    console.error("remove document error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 }
 
 module.exports = {
   getAll,
   create,
-  importDoc,
   getById,
   update,
   duplicate,

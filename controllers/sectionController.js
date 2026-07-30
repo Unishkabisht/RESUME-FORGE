@@ -1,26 +1,48 @@
-// controllers/sectionController.js
-// Handles sections within a document and the items inside each section.
+/**
+ * @file sectionController.js
+ * @description Controller for document sections and section items.
+ */
 
 const { Document, Section, Item } = require("../models");
 const { checkOwner } = require("./documentController");
 
-const VALID_SECTION_TYPES = ["experience", "education", "skills", "projects", "custom"];
+const VALID_TYPES = ["experience", "education", "skills", "projects", "custom"];
 
+/**
+ * Fetch and authorize document owner.
+ * @param {Object} req - Request object
+ * @param {Object} res - Response object
+ * @returns {Promise<Object|null>} Document instance
+ */
 async function getDoc(req, res) {
   const document = await Document.findByPk(req.params.id);
   if (!(await checkOwner(document, req.userId, res))) return null;
   return document;
 }
 
-async function getSection(documentId, sectionId, res) {
+/**
+ * Fetch section belonging to document.
+ * @param {number} documentId - Document ID
+ * @param {number} sectionId - Section ID
+ * @param {Object} res - Response object
+ * @returns {Promise<Object|null>} Section instance
+ */
+async function getSec(documentId, sectionId, res) {
   const section = await Section.findByPk(sectionId);
   if (!section || section.documentId !== Number(documentId)) {
-    res.status(404).json({ success: false, message: "Section not found" });
+    res.status(404).json({
+      success: false,
+      message: "Section not found",
+    });
     return null;
   }
   return section;
 }
 
+/**
+ * Create a new section.
+ * @route POST /api/documents/:id/sections
+ */
 async function create(req, res) {
   try {
     const document = await getDoc(req, res);
@@ -28,174 +50,208 @@ async function create(req, res) {
 
     const { type, label } = req.body;
     if (!type) {
-      return res.status(400).json({ success: false, message: "Section type is required" });
+      return res.status(400).json({
+        success: false,
+        message: "Section type required",
+      });
     }
 
-    if (!VALID_SECTION_TYPES.includes(type)) {
-      return res.status(400).json({ success: false, message: "Invalid section type" });
+    if (!VALID_TYPES.includes(type)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid section type",
+      });
     }
 
-    const docSectionsCount = await Section.count({ where: { documentId: document.id } });
+    const count = await Section.count({ where: { documentId: document.id } });
 
     const section = await Section.create({
       documentId: document.id,
-      type,
-      label: label || type,
       heading: label || type,
-      order: docSectionsCount + 1,
-      position: docSectionsCount + 1,
+      position: count + 1,
     });
 
     return res.status(201).json({
       success: true,
-      message: "Section created successfully",
+      message: "Section created",
       data: section,
     });
   } catch (error) {
-    console.log("error in create section", error);
-    return res.status(500).json({ success: false, message: "Internal Server Error" });
+    console.error("create section error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 }
 
+/**
+ * Update an existing section.
+ * @route PATCH /api/documents/:id/sections/:sectionId
+ */
 async function update(req, res) {
   try {
     const document = await getDoc(req, res);
     if (!document) return;
 
-    const section = await getSection(document.id, req.params.sectionId, res);
+    const section = await getSec(document.id, req.params.sectionId, res);
     if (!section) return;
 
     const { label, order } = req.body;
-    if (label !== undefined) {
-      section.label = label;
-      section.heading = label;
-    }
-    if (order !== undefined) {
-      section.order = order;
-      section.position = order;
-    }
+    if (label !== undefined) section.heading = label;
+    if (order !== undefined) section.position = order;
     await section.save();
 
     return res.status(200).json({
       success: true,
-      message: "Section updated successfully",
+      message: "Section updated",
       data: section,
     });
   } catch (error) {
-    console.log("error in update section", error);
-    return res.status(500).json({ success: false, message: "Internal Server Error" });
+    console.error("update section error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 }
 
+/**
+ * Delete a section.
+ * @route DELETE /api/documents/:id/sections/:sectionId
+ */
 async function remove(req, res) {
   try {
     const document = await getDoc(req, res);
     if (!document) return;
 
-    const section = await getSection(document.id, req.params.sectionId, res);
+    const section = await getSec(document.id, req.params.sectionId, res);
     if (!section) return;
 
     await section.destroy();
 
     return res.status(200).json({
       success: true,
-      message: "Section deleted successfully",
+      message: "Section deleted",
       data: {},
     });
   } catch (error) {
-    console.log("error in remove section", error);
-    return res.status(500).json({ success: false, message: "Internal Server Error" });
+    console.error("remove section error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 }
 
-async function createItem(req, res) {
+/**
+ * Add an item to a section.
+ * @route POST /api/documents/:id/sections/:sectionId/items
+ */
+async function addItem(req, res) {
   try {
     const document = await getDoc(req, res);
     if (!document) return;
 
-    const section = await getSection(document.id, req.params.sectionId, res);
+    const section = await getSec(document.id, req.params.sectionId, res);
     if (!section) return;
 
-    const { fields } = req.body;
-    const itemsCount = await Item.count({ where: { sectionId: section.id } });
+    const { fields, content } = req.body;
+    const count = await Item.count({ where: { sectionId: section.id } });
 
     const item = await Item.create({
       sectionId: section.id,
-      fields: fields || {},
-      content: fields ? JSON.stringify(fields) : "",
-      order: itemsCount + 1,
-      position: itemsCount + 1,
+      content: content || (fields ? JSON.stringify(fields) : ""),
+      position: count + 1,
     });
 
     return res.status(201).json({
       success: true,
-      message: "Section item created successfully",
+      message: "Item created",
       data: item,
     });
   } catch (error) {
-    console.log("error in createItem", error);
-    return res.status(500).json({ success: false, message: "Internal Server Error" });
+    console.error("addItem error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 }
 
+/**
+ * Update an item inside a section.
+ * @route PATCH /api/documents/:id/sections/:sectionId/items/:itemId
+ */
 async function updateItem(req, res) {
   try {
     const document = await getDoc(req, res);
     if (!document) return;
 
-    const section = await getSection(document.id, req.params.sectionId, res);
+    const section = await getSec(document.id, req.params.sectionId, res);
     if (!section) return;
 
     const item = await Item.findByPk(req.params.itemId);
     if (!item || item.sectionId !== section.id) {
-      return res.status(404).json({ success: false, message: "Item not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Item not found",
+      });
     }
 
-    const { fields, order } = req.body;
-    if (fields !== undefined) {
-      item.fields = fields;
-      item.content = JSON.stringify(fields);
-    }
-    if (order !== undefined) {
-      item.order = order;
-      item.position = order;
-    }
+    const { fields, content, order } = req.body;
+    if (content !== undefined) item.content = content;
+    else if (fields !== undefined) item.content = JSON.stringify(fields);
+    if (order !== undefined) item.position = order;
     await item.save();
 
     return res.status(200).json({
       success: true,
-      message: "Section item updated successfully",
+      message: "Item updated",
       data: item,
     });
   } catch (error) {
-    console.log("error in updateItem", error);
-    return res.status(500).json({ success: false, message: "Internal Server Error" });
+    console.error("updateItem error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 }
 
+/**
+ * Remove an item from a section.
+ * @route DELETE /api/documents/:id/sections/:sectionId/items/:itemId
+ */
 async function removeItem(req, res) {
   try {
     const document = await getDoc(req, res);
     if (!document) return;
 
-    const section = await getSection(document.id, req.params.sectionId, res);
+    const section = await getSec(document.id, req.params.sectionId, res);
     if (!section) return;
 
     const item = await Item.findByPk(req.params.itemId);
     if (!item || item.sectionId !== section.id) {
-      return res.status(404).json({ success: false, message: "Item not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Item not found",
+      });
     }
 
     await item.destroy();
 
     return res.status(200).json({
       success: true,
-      message: "Section item deleted successfully",
+      message: "Item deleted",
       data: {},
     });
   } catch (error) {
-    console.log("error in removeItem", error);
-    return res.status(500).json({ success: false, message: "Internal Server Error" });
+    console.error("removeItem error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 }
 
@@ -203,7 +259,7 @@ module.exports = {
   create,
   update,
   remove,
-  createItem,
+  addItem,
   updateItem,
   removeItem,
 };

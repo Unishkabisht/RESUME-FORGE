@@ -1,15 +1,26 @@
-// controllers/userController.js
-// Handles the logged-in user's own profile: view, update, and delete.
+/**
+ * @file userController.js
+ * @description Controller for logged-in user profile operations.
+ */
 
 const { User, Document } = require("../models");
 
-function stripPassword(user) {
+/**
+ * Remove sensitive password attribute before returning user object.
+ * @param {Object} user - User instance
+ * @returns {Object} Safe user object
+ */
+function sanitize(user) {
   if (!user) return null;
-  const userJson = user.toJSON ? user.toJSON() : { ...user };
-  const { password, ...safeUser } = userJson;
-  return safeUser;
+  const raw = user.toJSON ? user.toJSON() : { ...user };
+  const { password, ...safe } = raw;
+  return safe;
 }
 
+/**
+ * Fetch authenticated user profile.
+ * @route GET /api/users/me
+ */
 async function getMe(req, res) {
   try {
     const user = await User.findByPk(req.userId);
@@ -22,19 +33,23 @@ async function getMe(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: "Profile fetched successfully",
-      data: stripPassword(user),
+      message: "Profile fetched",
+      data: sanitize(user),
     });
   } catch (error) {
-    console.log("error in getMe", error);
+    console.error("getMe error:", error);
     return res.status(500).json({
       success: false,
-      message: "Internal Server Error",
+      message: "Internal server error",
     });
   }
 }
 
-async function updateMe(req, res) {
+/**
+ * Update authenticated user profile.
+ * @route PUT /api/users/me
+ */
+async function update(req, res) {
   try {
     const { name, email } = req.body;
 
@@ -59,19 +74,23 @@ async function updateMe(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: "Profile updated successfully",
-      data: stripPassword(user),
+      message: "Profile updated",
+      data: sanitize(user),
     });
   } catch (error) {
-    console.log("error in updateMe", error);
+    console.error("update user error:", error);
     return res.status(500).json({
       success: false,
-      message: "Internal Server Error",
+      message: "Internal server error",
     });
   }
 }
 
-async function deleteMe(req, res) {
+/**
+ * Delete authenticated user account and associated documents.
+ * @route DELETE /api/users/me
+ */
+async function remove(req, res) {
   try {
     const user = await User.findByPk(req.userId);
     if (!user) {
@@ -81,22 +100,25 @@ async function deleteMe(req, res) {
       });
     }
 
-    // Cascade deletions manually to ensure consistency
     await Document.destroy({ where: { userId: user.id } });
     await user.destroy();
 
     return res.status(200).json({
       success: true,
-      message: "Account deleted successfully",
+      message: "Account deleted",
       data: {},
     });
   } catch (error) {
-    console.log("error in deleteMe", error);
+    console.error("remove user error:", error);
     return res.status(500).json({
       success: false,
-      message: "Internal Server Error",
+      message: "Internal server error",
     });
   }
 }
 
-module.exports = { getMe, updateMe, deleteMe };
+module.exports = {
+  getMe,
+  update,
+  remove,
+};
